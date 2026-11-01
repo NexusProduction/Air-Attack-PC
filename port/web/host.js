@@ -124,7 +124,13 @@
       overlay('<div class="panel wide"><h2>' + esc(S(2131492964).replace(/ -$/, "")) + "</h2>" +
         '<table><tr><th>#</th><th>Name</th><th>Score</th><th>Waves</th><th>Mode</th></tr>' + (rows || '<tr><td colspan="5">No scores yet</td></tr>') + "</table>" +
         '<div class="row"><label>Name <input id="hs-name" maxlength="16" value="' + esc(playerName()) + '"></label><button id="hs-ok">' + esc(S(2131492891)) + "</button></div></div>");
-      $("hs-ok").onclick = () => { try { localStorage.setItem("aa:playerName", $("hs-name").value || "Player"); } catch (e) { } closeOverlay(); state.modal--; };
+      $("hs-ok").onclick = () => {
+        try { localStorage.setItem("aa:playerName", $("hs-name").value || "Player"); } catch (e) { }
+        closeOverlay(); state.modal--;
+        // the Android highscore screen was a separate activity: returning from it ran Activity.onResume, which re-enables
+        // the menu buttons (GameUiController.h). Do the same here, otherwise the menu comes back without its buttons.
+        try { state.view.getMasterViewSwitcher$().h$(); } catch (e) { console.warn("resume failed", e); }
+      };
     }
 
     static submitScoreQuiet(score, waves, difficulty) {

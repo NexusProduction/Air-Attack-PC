@@ -200,6 +200,20 @@ class JsGen {
         }
     }
 
+    /** diagnostic: an int/int division whose result is silently widened to float/double (JADX drops the (float) cast) */
+    String convE(JCExpression e, Type to) {
+        K t = valueKind(to);
+        if (t == K.FLOAT || t == K.DOUBLE) {
+            JCExpression x = e;
+            while (x instanceof JCParens) x = ((JCParens) x).expr;
+            if (x instanceof JCBinary && ((JCBinary) x).getTag() == Tag.DIV) {
+                K k = valueKind(x.type);
+                if (k == K.INT || k == K.LONG) System.err.println("INTDIV-REVIEW " + fn.cls.flatname + ": " + e.toString().replace('\n', ' ') + "  -> " + to);
+            }
+        }
+        return conv(expr(e), e.type, to);
+    }
+
     String conv(String js, Type from, Type to) {
         K f = valueKind(from), t = valueKind(to);
         if (f == K.REF || t == K.REF || f == K.VOID || t == K.VOID || f == t) return js;
@@ -457,7 +471,7 @@ class JsGen {
             for (JCTree m : finit) {
                 if (m instanceof JCVariableDecl) {
                     JCVariableDecl v = (JCVariableDecl) m;
-                    line("this." + fname(v.sym) + " = " + conv(expr(v.init), v.init.type, v.sym.type) + ";");
+                    line("this." + fname(v.sym) + " = " + convE(v.init, v.sym.type) + ";");
                 } else {
                     stmt(m);
                 }
@@ -512,7 +526,7 @@ class JsGen {
                 if (m instanceof JCVariableDecl) {
                     JCVariableDecl v = (JCVariableDecl) m;
                     if ((v.mods.flags & Flags.STATIC) != 0 && (v.mods.flags & Flags.ENUM) == 0 && v.init != null && v.sym.getConstValue() == null)
-                        line(n + "." + fname(v.sym) + " = " + conv(expr(v.init), v.init.type, v.sym.type) + ";");
+                        line(n + "." + fname(v.sym) + " = " + convE(v.init, v.sym.type) + ";");
                 } else if (m instanceof JCBlock && (((JCBlock) m).flags & Flags.STATIC) != 0) {
                     stmt(m);
                 }
@@ -671,7 +685,7 @@ class JsGen {
             String decl = inSwitchCase ? "var " : "let ";
             String name = safeId(v.name.toString());
             if (v.init == null) line(decl + name + " = " + defaultValue(v.sym.type) + ";");
-            else line(decl + name + " = " + conv(expr(v.init), v.init.type, v.sym.type) + ";");
+            else line(decl + name + " = " + convE(v.init, v.sym.type) + ";");
         } else if (t instanceof JCExpressionStatement) {
             line(exprStmt(((JCExpressionStatement) t).expr) + ";");
         } else if (t instanceof JCIf) {
@@ -697,7 +711,7 @@ class JsGen {
                     if (!first) init.append(", ");
                     first = false;
                     init.append(safeId(v.name.toString()));
-                    if (v.init != null) init.append(" = ").append(conv(expr(v.init), v.init.type, v.sym.type));
+                    if (v.init != null) init.append(" = ").append(convE(v.init, v.sym.type));
                 }
             } else {
                 boolean first = true;
@@ -750,7 +764,7 @@ class JsGen {
         } else if (t instanceof JCReturn) {
             JCReturn r = (JCReturn) t;
             if (r.expr == null) line("return;");
-            else line("return " + conv(expr(r.expr), r.expr.type, fn.retType) + ";");
+            else line("return " + convE(r.expr, fn.retType) + ";");
         } else if (t instanceof JCBreak) {
             JCBreak b = (JCBreak) t;
             line(b.label == null ? "break;" : "break " + safeId(b.label.toString()) + ";");
@@ -979,16 +993,16 @@ class JsGen {
         StringBuilder sb = new StringBuilder();
         int n = ps.size();
         if (varargsElem != null) {
-            for (int i = 0; i < n - 1; i++) sb.append(", ").append(conv(expr(args.get(i)), args.get(i).type, ps.get(i)));
+            for (int i = 0; i < n - 1; i++) sb.append(", ").append(convE(args.get(i), ps.get(i)));
             Type elem = varargsElem;
             StringBuilder arr = new StringBuilder();
             for (int i = n - 1; i < args.size(); i++) {
                 if (i > n - 1) arr.append(", ");
-                arr.append(conv(expr(args.get(i)), args.get(i).type, elem));
+                arr.append(convE(args.get(i), elem));
             }
             sb.append(", ").append(arrayLiteral(elem, arr.toString()));
         } else {
-            for (int i = 0; i < args.size(); i++) sb.append(", ").append(conv(expr(args.get(i)), args.get(i).type, ps.get(i)));
+            for (int i = 0; i < args.size(); i++) sb.append(", ").append(convE(args.get(i), ps.get(i)));
         }
         return sb.toString();
     }
@@ -1206,8 +1220,8 @@ class JsGen {
                 return "(" + a + (tag == Tag.EQ ? " == " : " != ") + c + ")";
             }
         }
-        String a = conv(expr(b.lhs), b.lhs.type, lt);
-        String c = conv(expr(b.rhs), b.rhs.type, rt);
+        String a = convE(b.lhs, lt);
+        String c = convE(b.rhs, rt);
         switch (tag) {
             case PLUS: return arith(k, "+", a, c);
             case MINUS: return arith(k, "-", a, c);
@@ -1376,7 +1390,7 @@ class JsGen {
 
     String assign(JCAssign a) {
         LV lv = lvalue(a.lhs);
-        String v = conv(expr(a.rhs), a.rhs.type, a.lhs.type);
+        String v = convE(a.rhs, a.lhs.type);
         String r = lv.setPrefix + " = " + v;
         return lv.setup.isEmpty() ? "(" + r + ")" : "(" + lv.setup + r + ")";
     }
@@ -1391,7 +1405,7 @@ class JsGen {
             res = "$sn(" + lv.get + ") + " + strOf(a.rhs);
         } else {
             String cur = conv(lv.get, a.lhs.type, lt);
-            String rhs = conv(expr(a.rhs), a.rhs.type, rt);
+            String rhs = convE(a.rhs, rt);
             K k = kindOf(lt);
             String op;
             switch (tag) {

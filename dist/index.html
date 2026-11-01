@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Air Attack</title>
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: "Joystix", monospace; color: #fff; }
+  #wrap { position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; transform-origin: 0 0; background: #000; }
+  #screen { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; background: #000; image-rendering: auto; touch-action: none; user-select: none; }
+  /* start screen = the game's own full-size title artwork (res/raw/loadingimage_720.png, 1140x720, cropped to 16:9 and scaled to the 1280x720 surface) */
+  #title { position: absolute; inset: 0; background: #0b1b33 url("cover.png") center / 100% 100% no-repeat; }
+  #loading { position: absolute; left: 460px; bottom: 44px; width: 360px; height: 14px; border: 2px solid #fff; background: rgba(0,0,0,.55); }
+  #bar { height: 100%; width: 0; background: #ffd84a; }
+  #status { position: absolute; left: 0; right: 0; bottom: 12px; text-align: center; min-height: 24px; font-size: 14px; color: #f88; }
+  #start { display: none; position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0 0 22px 0; box-sizing: border-box; background: transparent; border: 0; cursor: pointer;
+           font: inherit; font-size: 30px; color: #fff; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; text-align: center; display: none; align-items: flex-end; justify-content: center; }
+  #start.ready { display: flex; animation: blink 1.1s steps(2, start) infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  #overlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.55); }
+  #overlay.show { display: flex; }
+  .panel { background: #14263f; border: 4px solid #ffd84a; padding: 26px 34px; min-width: 460px; max-width: 760px; font-size: 18px; line-height: 1.5; }
+  .panel.wide { min-width: 640px; }
+  .panel h2 { margin: 0 0 16px; font-size: 26px; color: #ffd84a; }
+  .panel p { margin: 0 0 14px; } .panel .pc { color: #9fd3ff; font-size: 15px; }
+  .panel table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 15px; }
+  .panel th, .panel td { text-align: left; padding: 3px 8px; border-bottom: 1px solid #36507a; }
+  .row { display: flex; gap: 14px; align-items: center; justify-content: center; margin-top: 12px; }
+  .row .pg { font-size: 14px; opacity: .8; }
+  .panel button { font: inherit; font-size: 18px; padding: 8px 20px; cursor: pointer; background: #ffd84a; color: #111; border: 3px solid #fff; }
+  .panel button:disabled { opacity: .35; cursor: default; }
+  .panel label { display: block; margin: 10px 0; } .panel input, .panel select { font: inherit; font-size: 16px; }
+  #fatal { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px; background: #800; display: none; font-size: 14px; }
+  #fps { position: absolute; left: 8px; top: 6px; font-size: 13px; color: #9fd3ff; background: rgba(0,0,0,.5); padding: 2px 6px; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="screen" width="1280" height="720"></canvas>
+  <div id="title">
+    <div id="loading"><div id="bar"></div></div>
+    <div id="status"></div>
+    <button id="start">CLICK OR PRESS ENTER TO START</button>
+  </div>
+  <div id="overlay"></div>
+  <div id="fatal"></div>
+  <div id="fps" style="display:none"></div>
+</div>
+<script>
+  // fixed 1280x720 game surface, uniformly scaled to fit the window
+  function fit() { const s = Math.min(innerWidth / 1280, innerHeight / 720); document.getElementById("wrap").style.transform = "scale(" + s + ") translate(-50%,-50%)"; document.getElementById("wrap").style.transformOrigin = "0 0"; }
+  addEventListener("resize", fit); fit();
+</script>
+<script src="game-bundle.js"></script>
+</body>
+</html>

@@ -12,4 +12,5 @@ mkdir -p dist
   cat port/web/host.js
 } > dist/game-bundle.js
 cp port/web/index.html dist/index.html
+cp port/web/cover.png dist/cover.png
 echo "built dist/game-bundle.js ($(wc -c < dist/game-bundle.js) bytes)"

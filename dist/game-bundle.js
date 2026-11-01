@@ -5140,6 +5140,46 @@ class dk_logisoft_airattack_javaalex_awt_geom_AffineTransform extends java_lang_
   }
   a$Abvi$I$Abvi$I$I(bviVarArr, i, bviVarArr2, i2, i3) {
     let $t0;
+    let iState = this.a;
+    for (let k = 0; (k < i3); (++k)) {
+      let bviSrc = bviVarArr[(i + k | 0)];
+      let dX = bviSrc.a$();
+      let dY = bviSrc.b$();
+      let bviDst = bviVarArr2[(i2 + k | 0)];
+      if (((bviDst == null))) {
+        (bviDst = new d_bvj().$init$());
+        ($t0 = (i2 + k | 0), bviVarArr2[$t0] = bviDst);
+      }
+      switch ((iState)) {
+        case 0:
+          bviDst.a$D$D(dX, dY);
+          break;
+        case 1:
+          bviDst.a$D$D((dX + this.m02), (dY + this.m12));
+          break;
+        case 2:
+          bviDst.a$D$D((dX * this.m00), (dY * this.m11));
+          break;
+        case 3:
+          bviDst.a$D$D((((dX * this.m00)) + this.m02), (((dY * this.m11)) + this.m12));
+          break;
+        case 4:
+          bviDst.a$D$D((dY * this.m01), (dX * this.m10));
+          break;
+        case 5:
+          bviDst.a$D$D((((dY * this.m01)) + this.m02), (((dX * this.m10)) + this.m12));
+          break;
+        case 6:
+          bviDst.a$D$D((((this.m00 * dX)) + ((this.m01 * dY))), (((dX * this.m10)) + ((dY * this.m11))));
+          break;
+        default:
+          bviDst.a$D$D(((((this.m00 * dX)) + ((this.m01 * dY))) + this.m02), ((((dX * this.m10)) + ((dY * this.m11))) + this.m12));
+          break;
+      }
+    }
+  }
+  unusedBrokenTransform$Abvi$I$Abvi$I$I(bviVarArr, i, bviVarArr2, i2, i3) {
+    let $t0;
     let bvjVar = null;
     let i4 = this.a;
     let i5 = i;
@@ -5495,7 +5535,7 @@ d_ced.$ifaces = ["java_lang_Comparable"];
 class d_bvk extends d_bwh {
   constructor() { super(); if (!d_bvk.$ci) d_bvk.$clinit(); this.a$$bvk = false; this.b$$bvk = 0; this.c$$bvk = 0; this.f657d = 0; this.e$$bvk = 0; this.f$$bvk = false; this.g$$bvk = 0; this.h$$bvk = 0; this.k$$bvk = 0; this.l$$bvk = 0; this.m$$bvk = 0; this.n$$bvk = false; this.o$$bvk = null; this.p$$bvk = 0; }
   $finit$bvk() {
-    this.o$$bvk = [new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$()];
+    this.o$$bvk = [new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$(), new d_bvj().$init$()];
   }
   $init$() {
     super.$init$();
@@ -5510,10 +5550,11 @@ class d_bvk extends d_bwh {
     let iRound2 = java_lang_Math.round$F(Math.fround(Math.fround(this.y) - (Math.fround(Math.fround(this.y) * 0.699999988079071))));
     let f3 = Math.fround($idiv(iRound, 2));
     let f4 = Math.fround($idiv(iRound2, 2));
-    this.o$$bvk[0].a$F$F(f3, f4);
-    this.o$$bvk[1].a$F$F(f3, Math.fround((this.y - iRound2 | 0)));
-    this.o$$bvk[2].a$F$F(Math.fround((this.x - iRound | 0)), f4);
-    this.o$$bvk[3].a$F$F(Math.fround((this.x - iRound | 0)), Math.fround((this.y - iRound2 | 0)));
+    for (let i5 = 0; (i5 < 6); (++i5)) {
+      let f5 = Math.fround((Math.fround(0.15000000596046448 + (Math.fround((Math.fround(i5)) * 0.14000000059604645)))) * (Math.fround(this.x)));
+      this.o$$bvk[Math.imul(i5, 2)].a$F$F(f5, f4);
+      this.o$$bvk[((Math.imul(i5, 2)) + 1 | 0)].a$F$F(f5, Math.fround((this.y - iRound2 | 0)));
+    }
     this.a$Abvj(this.o$$bvk);
     (this.a$$bvk = false);
     (this.l$$bvk = 1.0);
@@ -12980,7 +13021,7 @@ class d_bvn extends d_bwl {
 }
 d_bvn.$jname = "d.bvn";
 class d_bwb extends d_bvu {
-  constructor() { super(); this.f665d = 0; }
+  constructor() { super(); this.f665d = 0; this.faceLeft = false; this.aligned = false; }
   $init$() {
     super.$init$();
     return this;
@@ -12990,16 +13031,40 @@ class d_bwb extends d_bvu {
     (d_bwa.$ci?d_bwa:d_bwa.$clinit()).a$String$F$F$Game((d_bxi.$ci?d_bxi:d_bxi.$clinit()).a$().d$I(2131492974), this.v$(), this.z$(), game);
     (this.c$$bvu = false);
     (this.f665d = Math.fround((Math.fround((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$() / 6.0)) + 0.15000000596046448));
+    (this.aligned = false);
+    (this.faceLeft = ((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$I(2) === 0));
+  }
+  f$() {
+    return this.faceLeft;
   }
   a$() {
     let bwmVarB = this.w.b$bwh(this);
     if (((bwmVarB == null))) {
       (this.b$$bvu = 0.0);
+      return;
+    }
+    let fDx = Math.fround(bwmVarB.v$() - this.v$());
+    let fStep = Math.abs(Math.fround(Math.fround(this.f665d * (d_bzg.$ci?d_bzg:d_bzg.$clinit()).d$()) * this.v));
+    let fEnter = Math.fround(fStep + 2.0);
+    if ((this.aligned)) {
+      if (((Math.abs(fDx) > Math.fround(fEnter * 2.0)))) {
+        (this.aligned = false);
+      }
     } else {
-      if (((bwmVarB.y$() < this.y$()))) {
+      if (((Math.abs(fDx) <= fEnter))) {
+        (this.aligned = true);
+        (this.faceLeft = ((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$I(2) === 0));
+      }
+    }
+    if ((this.aligned)) {
+      (this.b$$bvu = 0.0);
+    } else {
+      if (((fDx < 0.0))) {
         (this.b$$bvu = (-this.f665d));
+        (this.faceLeft = true);
       } else {
         (this.b$$bvu = this.f665d);
+        (this.faceLeft = false);
       }
     }
   }
@@ -14055,7 +14120,13 @@ d_bvd.$jname = "d.bvd";
       overlay('<div class="panel wide"><h2>' + esc(S(2131492964).replace(/ -$/, "")) + "</h2>" +
         '<table><tr><th>#</th><th>Name</th><th>Score</th><th>Waves</th><th>Mode</th></tr>' + (rows || '<tr><td colspan="5">No scores yet</td></tr>') + "</table>" +
         '<div class="row"><label>Name <input id="hs-name" maxlength="16" value="' + esc(playerName()) + '"></label><button id="hs-ok">' + esc(S(2131492891)) + "</button></div></div>");
-      $("hs-ok").onclick = () => { try { localStorage.setItem("aa:playerName", $("hs-name").value || "Player"); } catch (e) { } closeOverlay(); state.modal--; };
+      $("hs-ok").onclick = () => {
+        try { localStorage.setItem("aa:playerName", $("hs-name").value || "Player"); } catch (e) { }
+        closeOverlay(); state.modal--;
+        // the Android highscore screen was a separate activity: returning from it ran Activity.onResume, which re-enables
+        // the menu buttons (GameUiController.h). Do the same here, otherwise the menu comes back without its buttons.
+        try { state.view.getMasterViewSwitcher$().h$(); } catch (e) { console.warn("resume failed", e); }
+      };
     }
 
     static submitScoreQuiet(score, waves, difficulty) {

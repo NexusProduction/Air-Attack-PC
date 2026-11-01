@@ -1,0 +1,128 @@
+@@ FILE d/bwb.java
+<<<<
+        this.c = false;
+        this.f665d = (bvh.a() / 6.0f) + 0.15f;
+    }
+====
+        this.c = false;
+        this.f665d = (bvh.a() / 6.0f) + 0.15f;
+        this.aligned = false;
+        this.faceLeft = bvh.a(2) == 0;
+    }
+
+    boolean faceLeft;
+    boolean aligned;
+
+    @Override // d.bwh
+    public boolean f() {
+        return this.faceLeft;
+    }
+>>>>
+<<<<
+        bwm bwmVarB = this.w.b(this);
+        if (bwmVarB == null) {
+            this.b = 0.0f;
+        } else if (bwmVarB.y() < y()) {
+            this.b = -this.f665d;
+        } else {
+            this.b = this.f665d;
+        }
+    }
+====
+        bwm bwmVarB = this.w.b(this);
+        if (bwmVarB == null) {
+            this.b = 0.0f;
+            return;
+        }
+        float fDx = bwmVarB.v() - v();
+        float fStep = Math.abs(this.f665d * bzg.d() * this.v);
+        float fEnter = fStep + 2.0f;
+        if (this.aligned) {
+            if (Math.abs(fDx) > fEnter * 2.0f) {
+                this.aligned = false;
+            }
+        } else if (Math.abs(fDx) <= fEnter) {
+            this.aligned = true;
+            this.faceLeft = bvh.a(2) == 0;
+        }
+        if (this.aligned) {
+            this.b = 0.0f;
+        } else if (fDx < 0.0f) {
+            this.b = -this.f665d;
+            this.faceLeft = true;
+        } else {
+            this.b = this.f665d;
+            this.faceLeft = false;
+        }
+    }
+>>>>
+@@ FILE d/bvk.java
+<<<<
+    private final bvj[] o = {new bvj(), new bvj(), new bvj(), new bvj()};
+====
+    private final bvj[] o = {new bvj(), new bvj(), new bvj(), new bvj(), new bvj(), new bvj(), new bvj(), new bvj(), new bvj(), new bvj(), new bvj(), new bvj()};
+>>>>
+<<<<
+        this.o[0].a(f3, f4);
+        this.o[1].a(f3, this.y - iRound2);
+        this.o[2].a(this.x - iRound, f4);
+        this.o[3].a(this.x - iRound, this.y - iRound2);
+        a(this.o);
+====
+        for (int i5 = 0; i5 < 6; i5++) {
+            float f5 = (0.15f + (((float) i5) * 0.14f)) * ((float) this.x);
+            this.o[i5 * 2].a(f5, f4);
+            this.o[(i5 * 2) + 1].a(f5, this.y - iRound2);
+        }
+        a(this.o);
+>>>>
+@@ FILE dk/logisoft/airattack/javaalex/awt/geom/AffineTransform.java
+<<<<
+    public void a(bvi[] bviVarArr, int i, bvi[] bviVarArr2, int i2, int i3) {
+        bvj bvjVar;
+        int i4 = this.a;
+====
+    public void a(bvi[] bviVarArr, int i, bvi[] bviVarArr2, int i2, int i3) {
+        int iState = this.a;
+        for (int k = 0; k < i3; k++) {
+            bvi bviSrc = bviVarArr[i + k];
+            double dX = bviSrc.a();
+            double dY = bviSrc.b();
+            bvi bviDst = bviVarArr2[i2 + k];
+            if (bviDst == null) {
+                bviDst = new bvj();
+                bviVarArr2[i2 + k] = bviDst;
+            }
+            switch (iState) {
+                case 0:
+                    bviDst.a(dX, dY);
+                    break;
+                case 1:
+                    bviDst.a(dX + this.m02, dY + this.m12);
+                    break;
+                case 2:
+                    bviDst.a(dX * this.m00, dY * this.m11);
+                    break;
+                case 3:
+                    bviDst.a((dX * this.m00) + this.m02, (dY * this.m11) + this.m12);
+                    break;
+                case 4:
+                    bviDst.a(dY * this.m01, dX * this.m10);
+                    break;
+                case 5:
+                    bviDst.a((dY * this.m01) + this.m02, (dX * this.m10) + this.m12);
+                    break;
+                case 6:
+                    bviDst.a((this.m00 * dX) + (this.m01 * dY), (dX * this.m10) + (dY * this.m11));
+                    break;
+                default:
+                    bviDst.a((this.m00 * dX) + (this.m01 * dY) + this.m02, (dX * this.m10) + (dY * this.m11) + this.m12);
+                    break;
+            }
+        }
+    }
+
+    private void unusedBrokenTransform(bvi[] bviVarArr, int i, bvi[] bviVarArr2, int i2, int i3) {
+        bvj bvjVar;
+        int i4 = this.a;
+>>>>

@@ -6539,7 +6539,7 @@ d_bwt.S$a = null;
 d_bwt.$ci = false;
 d_bwt.$jname = "d.bwt";
 class d_bvu extends d_bwt {
-  constructor() { super(); this.a$$bvu = null; this.b$$bvu = 0; this.c$$bvu = false; this.f660d = 0; }
+  constructor() { super(); this.a$$bvu = null; this.b$$bvu = 0; this.c$$bvu = false; this.f660d = 0; this.seekTime = 0n; this.seekX = 0; this.seekValid = false; this.faceLeft = false; this.aligned = false; }
   $init$() {
     super.$init$();
     return this;
@@ -6562,6 +6562,50 @@ class d_bvu extends d_bwt {
     }
     (this.c$$bvu = true);
     (this.f660d = 0);
+    (this.seekValid = false);
+    (this.aligned = false);
+    (this.faceLeft = ((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$I(2) === 0));
+  }
+  seek$F(speed) {
+    let bwmVarB = this.w.b$bwh(this);
+    if (((bwmVarB == null))) {
+      (this.b$$bvu = 0.0);
+      (this.seekValid = false);
+      return;
+    }
+    let now = java_lang_System.currentTimeMillis$();
+    if ((((!this.seekValid) || ($l(now - this.seekTime) >= BigInt(2000))))) {
+      (this.seekValid = true);
+      (this.seekTime = now);
+      (this.seekX = bwmVarB.v$());
+    }
+    let fDx = Math.fround(this.seekX - this.v$());
+    let fStep = Math.abs(Math.fround(Math.fround(speed * (d_bzg.$ci?d_bzg:d_bzg.$clinit()).d$()) * this.v));
+    if (((Math.abs(fDx) <= Math.fround(fStep + 2.0)))) {
+      (this.b$$bvu = 0.0);
+      let fReal = Math.fround(bwmVarB.v$() - this.v$());
+      if (((Math.abs(fReal) > 6.0))) {
+        (this.faceLeft = (fReal < 0.0));
+        (this.aligned = false);
+      } else {
+        if (((!this.aligned))) {
+          (this.aligned = true);
+          (this.faceLeft = ((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$I(2) === 0));
+        }
+      }
+      return;
+    }
+    (this.aligned = false);
+    if (((fDx < 0.0))) {
+      (this.b$$bvu = (-speed));
+      (this.faceLeft = true);
+    } else {
+      (this.b$$bvu = speed);
+      (this.faceLeft = false);
+    }
+  }
+  f$() {
+    return this.faceLeft;
   }
   d$() {
     super.d$();
@@ -6595,9 +6639,7 @@ class d_bvu extends d_bwt {
     }
   }
   a$() {
-    if ((((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$I(150) === 0))) {
-      (this.b$$bvu = Math.fround(Math.fround((((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$I(5) - 2 | 0))) / 10.0));
-    }
+    this.seek$F(0.20000000298023224);
   }
   i$() {
     let bwmVarI = this.w.i$bwh(this);
@@ -13021,7 +13063,7 @@ class d_bvn extends d_bwl {
 }
 d_bvn.$jname = "d.bvn";
 class d_bwb extends d_bvu {
-  constructor() { super(); this.f665d = 0; this.faceLeft = false; this.aligned = false; }
+  constructor() { super(); this.f665d = 0; }
   $init$() {
     super.$init$();
     return this;
@@ -13031,42 +13073,9 @@ class d_bwb extends d_bvu {
     (d_bwa.$ci?d_bwa:d_bwa.$clinit()).a$String$F$F$Game((d_bxi.$ci?d_bxi:d_bxi.$clinit()).a$().d$I(2131492974), this.v$(), this.z$(), game);
     (this.c$$bvu = false);
     (this.f665d = Math.fround((Math.fround((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$() / 6.0)) + 0.15000000596046448));
-    (this.aligned = false);
-    (this.faceLeft = ((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$I(2) === 0));
-  }
-  f$() {
-    return this.faceLeft;
   }
   a$() {
-    let bwmVarB = this.w.b$bwh(this);
-    if (((bwmVarB == null))) {
-      (this.b$$bvu = 0.0);
-      return;
-    }
-    let fDx = Math.fround(bwmVarB.v$() - this.v$());
-    let fStep = Math.abs(Math.fround(Math.fround(this.f665d * (d_bzg.$ci?d_bzg:d_bzg.$clinit()).d$()) * this.v));
-    let fEnter = Math.fround(fStep + 2.0);
-    if ((this.aligned)) {
-      if (((Math.abs(fDx) > Math.fround(fEnter * 2.0)))) {
-        (this.aligned = false);
-      }
-    } else {
-      if (((Math.abs(fDx) <= fEnter))) {
-        (this.aligned = true);
-        (this.faceLeft = ((d_bvh.$ci?d_bvh:d_bvh.$clinit()).a$I(2) === 0));
-      }
-    }
-    if ((this.aligned)) {
-      (this.b$$bvu = 0.0);
-    } else {
-      if (((fDx < 0.0))) {
-        (this.b$$bvu = (-this.f665d));
-        (this.faceLeft = true);
-      } else {
-        (this.b$$bvu = this.f665d);
-        (this.faceLeft = false);
-      }
-    }
+    this.seek$F(this.f665d);
   }
   a$bwt(bwtVar) {
     bwtVar.g$();
@@ -14076,6 +14085,9 @@ d_bvd.$jname = "d.bvd";
     static requestSleep$J(ms) { state.sleepMs = Number(ms); }
 
     static showPause$Object$Z(buw, show) {
+      // idempotent: Esc-pause followed by a tab switch (Activity.onPause) used to open the pause screen twice, so the
+      // modal counter stayed at 1 after "Resume" and every click / key was ignored for the rest of the session
+      if (show === state.pauseOpen) return;
       state.pauseOpen = show; state.modal += show ? 1 : -1;
       state.paused = show; state.pausedFrames = 0;
       if (!show) { closeOverlay(); kick(); return; }
@@ -14199,32 +14211,70 @@ d_bvd.$jname = "d.bvd";
     const cv = $("screen"), r = cv.getBoundingClientRect();
     return [(ev.clientX - r.left) * cv.width / r.width, (ev.clientY - r.top) * cv.height / r.height];
   }
-  function sendMotion(action, ev) {
-    if (!state.running || state.modal > 0) return;
-    const [x, y] = canvasPos(ev);
+  let downSent = false, lastPos = [0, 0], touchId = null;
+  function deliver(action, x, y) {
+    lastPos = [x, y];
     state.view.onTouchEvent$MotionEvent(android_view_MotionEvent.$obtain(action, x, y, performance.now()));
   }
+  function sendMotion(action, ev) {
+    if (!state.running || state.modal > 0) return false;
+    const [x, y] = canvasPos(ev);
+    deliver(action, x, y);
+    return true;
+  }
+  // a touch/click that was delivered as "down" must always be finished with an "up" (even if an overlay opened meanwhile)
+  function finishTouch(ev) {
+    if (!downSent) return;
+    downSent = false;
+    if (!state.running) return;
+    const [x, y] = ev ? canvasPos(ev) : lastPos;
+    deliver(1, x, y);
+  }
+  const isTyping = (t) => !!t && (t.tagName === "TEXTAREA" || t.tagName === "SELECT" || (t.tagName === "INPUT" && t.type !== "checkbox" && t.type !== "button"));
+  const findTouch = (e) => { for (const t of e.changedTouches) if (t.identifier === touchId) return t; return null; };
+
   function installInput() {
     const cv = $("screen");
-    cv.addEventListener("mousedown", (e) => { if (e.button !== 0) return; mouseDown = true; sendMotion(0, e); e.preventDefault(); });
-    window.addEventListener("mousemove", (e) => { if (mouseDown) sendMotion(2, e); });
-    window.addEventListener("mouseup", (e) => { if (mouseDown && e.button === 0) { mouseDown = false; sendMotion(1, e); } });
+    cv.addEventListener("mousedown", (e) => { if (e.button !== 0) return; mouseDown = true; downSent = sendMotion(0, e); e.preventDefault(); });
+    window.addEventListener("mousemove", (e) => { if (mouseDown && downSent) sendMotion(2, e); });
+    window.addEventListener("mouseup", (e) => { if (mouseDown && e.button === 0) { mouseDown = false; finishTouch(e); } });
     cv.addEventListener("contextmenu", (e) => e.preventDefault());
-    // touch screens work too: same events, first finger only
-    cv.addEventListener("touchstart", (e) => { sendMotion(0, e.changedTouches[0]); e.preventDefault(); }, { passive: false });
-    cv.addEventListener("touchmove", (e) => { sendMotion(2, e.changedTouches[0]); e.preventDefault(); }, { passive: false });
-    cv.addEventListener("touchend", (e) => { sendMotion(1, e.changedTouches[0]); e.preventDefault(); }, { passive: false });
+    // touch screens work too: same events, first finger only (a second finger lifting must not end the first one's touch)
+    cv.addEventListener("touchstart", (e) => {
+      if (touchId === null) { const t = e.changedTouches[0]; touchId = t.identifier; downSent = sendMotion(0, t); }
+      e.preventDefault();
+    }, { passive: false });
+    cv.addEventListener("touchmove", (e) => { const t = findTouch(e); if (t && downSent) sendMotion(2, t); e.preventDefault(); }, { passive: false });
+    const touchEnd = (e) => { const t = findTouch(e); if (t) { touchId = null; finishTouch(t); } e.preventDefault(); };
+    cv.addEventListener("touchend", touchEnd, { passive: false });
+    cv.addEventListener("touchcancel", touchEnd, { passive: false });
 
     const held = new Set();
     const ev = (a, c) => android_view_KeyEvent.$obtain(a, c, 0);
+    const clickFirst = (...ids) => { for (const id of ids) { const b = $(id); if (b) { b.click(); return true; } } return false; };
     window.addEventListener("keydown", (e) => {
-      if (e.code === "KeyF" && state.running && !e.repeat) { const el = $("fps"); if (el) el.style.display = el.style.display === "none" ? "block" : "none"; return; }
-      if (JUMPKEYS[e.code] && state.running) { e.preventDefault(); if (!e.repeat && state.modal === 0) doJump(); return; }
-      const code = KEYMAP[e.code]; if (code === undefined || !state.running) return;
+      if (!state.running) return;
+      // Esc: pause screen -> resume, any other overlay (help / highscores / settings / game over) -> its OK button
+      if (e.code === "Escape" && state.modal > 0) {
+        e.preventDefault(); if (e.repeat) return;
+        if (state.pauseOpen) state.activity.onBackPressed$(); else clickFirst("h-ok", "hs-ok", "s-ok", "go-ok");
+        return;
+      }
+      // typing in the name field / settings: the game must not see (or swallow) the keys; Enter confirms
+      if (isTyping(e.target)) {
+        if ((e.code === "Enter" || e.code === "NumpadEnter") && e.target.tagName === "INPUT") { e.preventDefault(); clickFirst("go-ok", "hs-ok"); }
+        return;
+      }
+      if (e.metaKey || e.altKey) return; // browser shortcuts (Alt+Left = back, Cmd+D ...)
+      // Space / Enter on a focused overlay button must activate it
+      if (state.modal > 0 && e.target && e.target.tagName === "BUTTON" && (e.code === "Space" || e.code === "Enter" || e.code === "NumpadEnter")) return;
+      if (e.code === "KeyF" && !e.repeat) { const el = $("fps"); if (el) el.style.display = el.style.display === "none" ? "block" : "none"; return; }
+      if (JUMPKEYS[e.code]) { e.preventDefault(); if (!e.repeat && state.modal === 0) doJump(); return; }
+      const code = KEYMAP[e.code]; if (code === undefined) return;
       e.preventDefault();
       if (e.repeat) return;
-      if (code === 4) { // Escape == Android BACK: the view gets it first, if it declines the activity handles it (pause)
-        if (state.modal > 0) { if (state.pauseOpen) state.activity.onBackPressed$(); return; }
+      if (code === 4) { // Escape / Backspace == Android BACK: the view gets it first, if it declines the activity handles it (pause)
+        if (state.modal > 0) return;
         if (state.view.onKeyDown$I$KeyEvent(4, ev(0, 4))) held.add(e.code); else state.activity.onBackPressed$();
         return;
       }
@@ -14234,18 +14284,33 @@ d_bvd.$jname = "d.bvd";
       state.view.onKeyDown$I$KeyEvent(code, ev(0, code));
     });
     window.addEventListener("keyup", (e) => {
-      const code = KEYMAP[e.code]; if (code === undefined || !state.running) return;
+      if (!state.running) return;
+      const code = KEYMAP[e.code]; if (code === undefined) return;
+      if (isTyping(e.target) && !held.has(e.code)) return;
       e.preventDefault();
       if (code === 21) dirHeld.left = false; else if (code === 22) dirHeld.right = false;
       if (!held.has(e.code)) return;
       held.delete(e.code);
       state.view.onKeyUp$I$KeyEvent(code, ev(1, code));
     });
+    // focus lost (alt-tab, click into another window): release everything, otherwise a key / button released elsewhere
+    // never reaches us and the soldier keeps walking on its own
+    const releaseAll = () => {
+      if (!state.running) return;
+      dirHeld.left = dirHeld.right = false;
+      for (const c of Array.from(held)) { held.delete(c); try { state.view.onKeyUp$I$KeyEvent(KEYMAP[c], ev(1, KEYMAP[c])); } catch (e) { console.warn(e); } }
+      if (mouseDown) { mouseDown = false; finishTouch(null); }
+      if (touchId !== null) { touchId = null; finishTouch(null); }
+    };
+    window.addEventListener("blur", releaseAll);
     // Activity lifecycle: tab hidden == onPause (the game pauses), visible again == onResume
     document.addEventListener("visibilitychange", () => {
       if (!state.running) return;
-      if (document.hidden) { state.activity.onPause$(); state.view.onWindowFocusChanged$Z(false); }
-      else { state.view.onWindowFocusChanged$Z(true); state.activity.onResume$(); }
+      if (document.hidden) { releaseAll(); state.activity.onPause$(); state.view.onWindowFocusChanged$Z(false); }
+      else {
+        const ac = G.$audioCtx(); if (ac && ac.state !== "running") { try { ac.resume(); } catch (e) { } } // iOS/Safari suspend audio in the background
+        state.view.onWindowFocusChanged$Z(true); state.activity.onResume$();
+      }
     });
   }
 
@@ -14255,6 +14320,7 @@ d_bvd.$jname = "d.bvd";
     state.sleepMs = 0;
     try {
       state.view.getThread$().step$();
+      state.errors = 0; // only a run of failing frames is fatal, not a few rare errors spread over a long session
     } catch (e) {
       console.error("step failed:", e && e.stack || (e && e.toString$ ? e.toString$() : e), e && e.$jsStack || "");
       state.errors = (state.errors || 0) + 1;
@@ -14284,19 +14350,28 @@ d_bvd.$jname = "d.bvd";
   }
 
   // ------------------------------------------------------------------ boot
+  let starting = false;
   async function start() {
+    if (starting) return; // click + Enter at the same time used to boot the game twice
+    starting = true;
     $("start").disabled = true;
     const ac = G.$audioCtx(); if (ac && ac.state !== "running") { try { await ac.resume(); } catch (e) { } }
-    $("title").style.display = "none";
-    const act = new dk_logisoft_airattack_AirAttackActivity().$init$();
-    state.activity = act;
-    state.view = act.boot$();
-    state.view.getThread$().c$();            // surfaceCreated
-    state.view.onWindowFocusChanged$Z(true); // window focus gained
-    state.running = true;
-    installInput();
-    G.$game = state;
-    frame();
+    try {
+      const act = new dk_logisoft_airattack_AirAttackActivity().$init$();
+      state.activity = act;
+      state.view = act.boot$();
+      state.view.getThread$().c$();            // surfaceCreated
+      state.view.onWindowFocusChanged$Z(true); // window focus gained
+      $("title").style.display = "none";
+      state.running = true;
+      installInput();
+      G.$game = state;
+      frame();
+    } catch (e) {
+      console.error("start failed", e);
+      $("title").style.display = "none";
+      $("fatal").textContent = "Could not start the game - see console: " + (e && e.message || e); $("fatal").style.display = "block";
+    }
   }
 
   async function main() {
@@ -14306,8 +14381,11 @@ d_bvd.$jname = "d.bvd";
     } catch (e) { $("status").textContent = "Loading failed: " + e.message; console.error(e); return; }
     $("status").textContent = "";
     $("loading").style.display = "none";
-    $("start").style.display = "inline-block";
+    $("start").classList.add("ready");
     $("start").onclick = start;
+    // Enter / Space also starts (the first user gesture is needed by the browser to allow sound)
+    const startKey = (e) => { if ((e.code === "Enter" || e.code === "NumpadEnter" || e.code === "Space") && !state.running) { e.preventDefault(); removeEventListener("keydown", startKey); start(); } };
+    G.addEventListener("keydown", startKey);
     if (location.hash === "#autostart") start();
   }
   G.addEventListener("DOMContentLoaded", main);

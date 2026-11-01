@@ -1,0 +1,95 @@
+@@ FILE d/bvu.java
+<<<<
+        this.c = true;
+        this.f660d = 0;
+    }
+====
+        this.c = true;
+        this.f660d = 0;
+        this.seekValid = false;
+        this.aligned = false;
+        this.faceLeft = bvh.a(2) == 0;
+    }
+
+    long seekTime;
+    float seekX;
+    boolean seekValid;
+    boolean faceLeft;
+    boolean aligned;
+
+    /**
+     * Walk towards the player. The player's x position is read again every 2 seconds and the character walks (left or
+     * right) towards that spot. Terrain in the way simply stops it (the move is refused); it tries again every frame, so it
+     * goes on as soon as the obstacle is gone (blasted away, dug out ...).
+     * Facing: looks where it walks; when it stands on the player's spot it looks to a random side.
+     */
+    protected void seek(float speed) {
+        bwm bwmVarB = this.w.b(this);
+        if (bwmVarB == null) {
+            this.b = 0.0f;
+            this.seekValid = false;
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (!this.seekValid || now - this.seekTime >= 2000) {
+            this.seekValid = true;
+            this.seekTime = now;
+            this.seekX = bwmVarB.v();
+        }
+        float fDx = this.seekX - v();
+        float fStep = Math.abs(speed * bzg.d() * this.v);
+        if (Math.abs(fDx) <= fStep + 2.0f) {
+            this.b = 0.0f;
+            float fReal = bwmVarB.v() - v();
+            if (Math.abs(fReal) > 6.0f) {
+                this.faceLeft = fReal < 0.0f;
+                this.aligned = false;
+            } else if (!this.aligned) {
+                this.aligned = true;
+                this.faceLeft = bvh.a(2) == 0;
+            }
+            return;
+        }
+        this.aligned = false;
+        if (fDx < 0.0f) {
+            this.b = -speed;
+            this.faceLeft = true;
+        } else {
+            this.b = speed;
+            this.faceLeft = false;
+        }
+    }
+
+    @Override // d.bwh
+    public boolean f() {
+        return this.faceLeft;
+    }
+>>>>
+<<<<
+    protected void a() {
+        if (bvh.a(150) == 0) {
+            this.b = (bvh.a(5) - 2) / 10.0f;
+        }
+    }
+====
+    protected void a() {
+        seek(0.2f);
+    }
+>>>>
+@@ FILE d/bwb.java
+<<<<
+    protected void a() {
+        bwm bwmVarB = this.w.b(this);
+        if (bwmVarB == null) {
+            this.b = 0.0f;
+        } else if (bwmVarB.y() < y()) {
+            this.b = -this.f665d;
+        } else {
+            this.b = this.f665d;
+        }
+    }
+====
+    protected void a() {
+        seek(this.f665d);
+    }
+>>>>

@@ -383,6 +383,9 @@
     G.addEventListener("keydown", startKey);
     if (location.hash === "#autostart") start();
   }
-  G.addEventListener("DOMContentLoaded", main);
+  // the page injects this script after the DOM is parsed, so DOMContentLoaded may already have fired
+  let booted = false;
+  const boot = () => { if (booted) return; booted = true; if (/(^|\s)phone(\s|$)/.test(document.documentElement.className)) return; main(); };
+  if (document.readyState === "loading") G.addEventListener("DOMContentLoaded", boot); else boot();
   G.$host = { state, start };
 })(globalThis);

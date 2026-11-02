@@ -7,11 +7,12 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#000000">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
-  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: "Joystix", monospace; color: #fff; }
-  #wrap { position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; transform-origin: 0 0; background: #000; }
-  #screen { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; background: #000; image-rendering: auto; touch-action: none; user-select: none; }
+  html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; overscroll-behavior: none; font-family: "Joystix", monospace; color: #fff; -webkit-tap-highlight-color: transparent; }
+  /* fixed 1280x720 game surface; fit() below scales it uniformly to the window and centres it (black bars on the sides / top+bottom) */
+  #wrap { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; background: #000; overflow: hidden; visibility: hidden; }
+  #screen { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; background: #000; image-rendering: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
   /* start screen = the game's own full-size title artwork (res/raw/loadingimage_720.png, 1140x720, cropped to 16:9 and scaled to the 1280x720 surface) */
   #title { position: absolute; inset: 0; background: #0b1b33 url("cover.png") center / 100% 100% no-repeat; }
   #loading { position: absolute; left: 460px; bottom: 44px; width: 360px; height: 14px; border: 2px solid #fff; background: rgba(0,0,0,.55); }
@@ -36,7 +37,40 @@
   .panel label { display: block; margin: 10px 0; } .panel input, .panel select { font: inherit; font-size: 16px; }
   #fatal { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px; background: #800; display: none; font-size: 14px; }
   #fps { position: absolute; left: 8px; top: 6px; font-size: 13px; color: #9fd3ff; background: rgba(0,0,0,.5); padding: 2px 6px; pointer-events: none; }
+
+  /* ---- phones: the game is not offered (see the detection script below) ---- */
+  #nophone, #nojs { display: none; }
+  html.phone, html.phone body { overflow: auto; }
+  html.phone #wrap { display: none; }
+  html.phone #nophone { display: flex; position: fixed; inset: 0; box-sizing: border-box; padding: 24px; align-items: center; justify-content: center; text-align: center; overflow: auto;
+                        background: #0b1b33; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", Arial, sans-serif; }
+  #nophone .np-card { max-width: 460px; margin: auto; }
+  #nophone img { width: 96px; height: 96px; display: block; margin: 0 auto 14px; }
+  #nophone h1 { margin: 0 0 18px; font-size: 30px; letter-spacing: 3px; color: #ffd84a; }
+  #nophone p { margin: 0 0 12px; line-height: 1.45; }
+  #nophone .np-main { font-size: 22px; font-weight: 700; }
+  #nophone .np-sub { font-size: 17px; opacity: .9; }
+  #nophone .np-hi { font-size: 17px; opacity: .9; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.25); }
+  @media (max-height: 480px) { #nophone img { display: none; } #nophone h1 { margin-bottom: 10px; font-size: 24px; } #nophone .np-main { font-size: 19px; } #nophone .np-hi { margin-top: 10px; padding-top: 10px; } }
+  #nojs { position: fixed; inset: 0; align-items: center; justify-content: center; background: #0b1b33; color: #fff; font-family: system-ui, Arial, sans-serif; text-align: center; padding: 24px; z-index: 9; }
 </style>
+<noscript><style>#nojs { display: flex; } #wrap { display: none; }</style></noscript>
+<script>
+  // Phone detection (runs before anything is drawn or downloaded). Phones get a "not available" page; PCs, laptops
+  // (also touch laptops) and tablets get the game.
+  (function () {
+    var phone = false, ua = navigator.userAgent || "";
+    var small = 0;                                                                                                          // shorter side of the REAL screen in CSS px (a phone is < 600, tablets / laptops / PCs are bigger)
+    try { small = Math.min(screen.width || 0, screen.height || 0); } catch (e) { }
+    try { if (navigator.userAgentData && navigator.userAgentData.mobile === true && small > 0 && small < 600) phone = true; } catch (e) { }   // Chromium "mobile" hint + phone-sized screen
+    if (/iPhone|iPod|Windows Phone|IEMobile|BlackBerry|BB10|Opera Mini|Opera Mobi|webOS|KAIOS|Android.+Mobile|Mobile.+Android|; Mobile;/i.test(ua)) phone = true;   // phone user agents (tablets do not contain "Mobile")
+    try {                                                                                                                  // "Request desktop site": the UA looks like a PC, but the primary input is touch and the real screen is phone-sized
+      var mm = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
+      if (small > 0 && small < 600 && mm("(pointer: coarse)") && mm("(hover: none)")) phone = true;
+    } catch (e) { }
+    if (phone) document.documentElement.className += " phone";
+  })();
+</script>
 </head>
 <body>
 <div id="wrap">
@@ -50,11 +84,56 @@
   <div id="fatal"></div>
   <div id="fps" style="display:none"></div>
 </div>
+
+<div id="nophone" role="alert">
+  <div class="np-card">
+    <img src="apple-touch-icon.png" alt="">
+    <h1>AIR ATTACK</h1>
+    <p class="np-main">This game is not available for phones.</p>
+    <p class="np-sub">Please open this page on a PC or laptop to play.</p>
+    <p class="np-hi" lang="hi">यह गेम फोन पर उपलब्ध नहीं है।<br>कृपया खेलने के लिए इसे PC या लैपटॉप पर खोलें।</p>
+  </div>
+</div>
+<div id="nojs">Please turn on JavaScript to play Air Attack.</div>
+
 <script>
-  // fixed 1280x720 game surface, uniformly scaled to fit the window
-  function fit() { const s = Math.min(innerWidth / 1280, innerHeight / 720); document.getElementById("wrap").style.transform = "scale(" + s + ") translate(-50%,-50%)"; document.getElementById("wrap").style.transformOrigin = "0 0"; }
-  addEventListener("resize", fit); fit();
+  // Scale the fixed 1280x720 surface to the window: uniform scale (never stretched), centred on whole pixels.
+  // Mouse / touch coordinates are mapped back through getBoundingClientRect() in host.js, so input stays exact at any scale.
+  (function () {
+    var wrap = document.getElementById("wrap"), de = document.documentElement;
+    function fit() {
+      var vw = de.clientWidth || window.innerWidth || 0, vh = de.clientHeight || window.innerHeight || 0;
+      if (vw < 1 || vh < 1) return;                                   // hidden iframe / minimised window: keep the last scale
+      var s = Math.min(vw / 1280, vh / 720);
+      wrap.style.transform = "scale(" + s + ")";
+      wrap.style.left = Math.round((vw - 1280 * s) / 2) + "px";
+      wrap.style.top = Math.round((vh - 720 * s) / 2) + "px";
+      wrap.style.visibility = "visible";
+    }
+    window.fit = fit;
+    fit();
+    window.addEventListener("resize", fit);
+    window.addEventListener("orientationchange", function () { fit(); setTimeout(fit, 250); });
+    window.addEventListener("load", fit);
+    document.addEventListener("fullscreenchange", fit);
+    document.addEventListener("webkitfullscreenchange", fit);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", fit);
+    try { if (window.ResizeObserver) new ResizeObserver(fit).observe(de); } catch (e) { }
+  })();
 </script>
-<script src="game-bundle.js"></script>
+<script>
+  // The game itself is only downloaded on devices that are allowed to play (phones never fetch it).
+  (function () {
+    if (/(^|\s)phone(\s|$)/.test(document.documentElement.className)) return;
+    var s = document.createElement("script");
+    s.src = "game-bundle.js?v=782d0295fb";
+    s.onerror = function () {
+      var f = document.getElementById("fatal");
+      f.textContent = "Could not load game-bundle.js - make sure every file of the dist folder is uploaded, then press Ctrl+F5.";
+      f.style.display = "block";
+    };
+    document.body.appendChild(s);
+  })();
+</script>
 </body>
 </html>

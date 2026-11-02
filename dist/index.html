@@ -96,21 +96,29 @@
 </div>
 <div id="nojs">Please turn on JavaScript to play Air Attack.</div>
 
+<script src="site-config.js?v=ac77710752"></script>
 <script>
   // Scale the fixed 1280x720 surface to the window: uniform scale (never stretched), centred on whole pixels.
+  // With the side ads on, the game gets the space BETWEEN the two ad rails (window.$sg, see guard.js) and the rails are placed next to it.
   // Mouse / touch coordinates are mapped back through getBoundingClientRect() in host.js, so input stays exact at any scale.
   (function () {
-    var wrap = document.getElementById("wrap"), de = document.documentElement;
+    var wrap = document.getElementById("wrap"), de = document.documentElement, live = false;
     function fit() {
       var vw = de.clientWidth || window.innerWidth || 0, vh = de.clientHeight || window.innerHeight || 0;
       if (vw < 1 || vh < 1) return;                                   // hidden iframe / minimised window: keep the last scale
-      var s = Math.min(vw / 1280, vh / 720);
+      var sg = window.$sg, L = { rail: 0 };
+      try { if (sg) L = sg.lay(vw, vh) || L; } catch (e) { }
+      var s = Math.max(0.02, Math.min((vw - 2 * L.rail) / 1280, vh / 720));
+      var w = 1280 * s, h = 720 * s, x = Math.round((vw - w) / 2), y = Math.round((vh - h) / 2);
       wrap.style.transform = "scale(" + s + ")";
-      wrap.style.left = Math.round((vw - 1280 * s) / 2) + "px";
-      wrap.style.top = Math.round((vh - 720 * s) / 2) + "px";
+      wrap.style.left = x + "px";
+      wrap.style.top = y + "px";
+      if (!live) return;                                              // nothing is drawn (game, ads) before the game bundle is there
       wrap.style.visibility = "visible";
+      try { if (sg) sg.plc(x, y, w, h, vw, vh); } catch (e) { }
     }
     window.fit = fit;
+    window.fitGo = function () { live = true; fit(); };
     fit();
     window.addEventListener("resize", fit);
     window.addEventListener("orientationchange", function () { fit(); setTimeout(fit, 250); });
@@ -126,11 +134,13 @@
   (function () {
     if (/(^|\s)phone(\s|$)/.test(document.documentElement.className)) return;
     var s = document.createElement("script");
-    s.src = "game-bundle.js?v=782d0295fb";
+    s.src = "game-bundle.js?v=ac77710752";
+    s.onload = function () { window.fitGo(); };
     s.onerror = function () {
       var f = document.getElementById("fatal");
       f.textContent = "Could not load game-bundle.js - make sure every file of the dist folder is uploaded, then press Ctrl+F5.";
       f.style.display = "block";
+      window.fitGo();
     };
     document.body.appendChild(s);
   })();

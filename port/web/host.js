@@ -69,6 +69,30 @@
 
   const state = { running: false, view: null, activity: null, sleepMs: 0, helpOpen: false, pauseOpen: false, modal: 0, timer: 0, paused: false, pausedFrames: 0 };
 
+  // ------------------------------------------------------------------ ad guard (guard.js -> window.$sg)
+  // The guard shows its full-screen message (ad blocker / window too small) and calls lock(): from then on the game neither steps nor
+  // reacts to any input. guardOk() is asked before the game starts, on every frame and for every input event.
+  let locked = false, allowStep = false, releaseAllFn = null;
+  const guardOk = () => { const g = G.$sg; return !!g && !locked && g.ok(); };   // no guard object at all = fail closed
+  function lock(on) {
+    on = !!on; if (on === locked) return;
+    locked = on;
+    if (on) {
+      if (state.timer) { clearTimeout(state.timer); state.timer = 0; }
+      if (releaseAllFn) releaseAllFn();
+      if (state.running && !document.hidden) {
+        // pause the game properly (the pause screen opens inside a game step), so that it does not run on by itself when the message goes away
+        allowStep = true;
+        try { state.activity.onPause$(); state.view.onWindowFocusChanged$Z(false); const th = state.view.getThread$(); for (let i = 0; i < 4 && !state.pauseOpen; i++) th.step$(); } catch (e) { console.warn(e); }
+        allowStep = false;
+      }
+    } else if (state.running) {
+      if (!document.hidden) { try { state.view.onWindowFocusChanged$Z(true); state.activity.onResume$(); } catch (e) { console.warn(e); } }
+      kick();
+    }
+  }
+  try { if (G.$sg) G.$sg.reg(lock); } catch (e) { }
+
   // ------------------------------------------------------------------ d.WebHost (called from translated code)
   class d_WebHost extends java_lang_Object {
     static createScreenCanvas$I$I(w, h) {
@@ -212,7 +236,7 @@
     state.view.onTouchEvent$MotionEvent(android_view_MotionEvent.$obtain(action, x, y, performance.now()));
   }
   function sendMotion(action, ev) {
-    if (!state.running || state.modal > 0) return false;
+    if (!state.running || state.modal > 0 || !guardOk()) return false;
     const [x, y] = canvasPos(ev);
     deliver(action, x, y);
     return true;
@@ -248,7 +272,7 @@
     const ev = (a, c) => android_view_KeyEvent.$obtain(a, c, 0);
     const clickFirst = (...ids) => { for (const id of ids) { const b = $(id); if (b) { b.click(); return true; } } return false; };
     window.addEventListener("keydown", (e) => {
-      if (!state.running) return;
+      if (!state.running || !guardOk()) return;
       // Esc: pause screen -> resume, any other overlay (help / highscores / settings / game over) -> its OK button
       if (e.code === "Escape" && state.modal > 0) {
         e.preventDefault(); if (e.repeat) return;
@@ -279,7 +303,7 @@
       state.view.onKeyDown$I$KeyEvent(code, ev(0, code));
     });
     window.addEventListener("keyup", (e) => {
-      if (!state.running) return;
+      if (!state.running || !guardOk()) return;
       const code = KEYMAP[e.code]; if (code === undefined) return;
       if (isTyping(e.target) && !held.has(e.code)) return;
       e.preventDefault();
@@ -297,6 +321,7 @@
       if (mouseDown) { mouseDown = false; finishTouch(null); }
       if (touchId !== null) { touchId = null; finishTouch(null); }
     };
+    releaseAllFn = releaseAll;
     window.addEventListener("blur", releaseAll);
     // Activity lifecycle: tab hidden == onPause (the game pauses), visible again == onResume
     document.addEventListener("visibilitychange", () => {
@@ -304,6 +329,7 @@
       if (document.hidden) { releaseAll(); state.activity.onPause$(); state.view.onWindowFocusChanged$Z(false); }
       else {
         const ac = G.$audioCtx(); if (ac && ac.state !== "running") { try { ac.resume(); } catch (e) { } } // iOS/Safari suspend audio in the background
+        if (locked) return; // the guard message is up: lock(false) resumes the game when it goes away
         state.view.onWindowFocusChanged$Z(true); state.activity.onResume$();
       }
     });
@@ -312,6 +338,7 @@
   // ------------------------------------------------------------------ frame loop
   function frame() {
     state.timer = 0;
+    if (!guardOk()) return; // frozen by the ad guard (kick() restarts the loop when the guard lets go)
     state.sleepMs = 0;
     try {
       state.view.getThread$().step$();
@@ -344,10 +371,20 @@
     } catch (e) { console.warn("score save failed", e); }
   }
 
+  // the game's own step function asks the guard as well, so stepping the game from the console / a second loop does not get around it
+  let stepGated = false;
+  function gateStep(thread) {
+    if (stepGated) return;
+    stepGated = true;
+    const P = Object.getPrototypeOf(thread), orig = P.step$;
+    Object.defineProperty(P, "step$", { value: function () { if (!allowStep && !guardOk()) return; return orig.call(this); }, writable: false, configurable: false });
+  }
+
   // ------------------------------------------------------------------ boot
   let starting = false;
   async function start() {
     if (starting) return; // click + Enter at the same time used to boot the game twice
+    if (!guardOk()) return; // ad blocker message / window-too-small message is showing
     starting = true;
     $("start").disabled = true;
     const ac = G.$audioCtx(); if (ac && ac.state !== "running") { try { await ac.resume(); } catch (e) { } }
@@ -355,6 +392,7 @@
       const act = new dk_logisoft_airattack_AirAttackActivity().$init$();
       state.activity = act;
       state.view = act.boot$();
+      gateStep(state.view.getThread$());
       state.view.getThread$().c$();            // surfaceCreated
       state.view.onWindowFocusChanged$Z(true); // window focus gained
       $("title").style.display = "none";
@@ -379,7 +417,7 @@
     $("start").classList.add("ready");
     $("start").onclick = start;
     // Enter / Space also starts (the first user gesture is needed by the browser to allow sound)
-    const startKey = (e) => { if ((e.code === "Enter" || e.code === "NumpadEnter" || e.code === "Space") && !state.running) { e.preventDefault(); removeEventListener("keydown", startKey); start(); } };
+    const startKey = (e) => { if ((e.code === "Enter" || e.code === "NumpadEnter" || e.code === "Space") && !state.running) { e.preventDefault(); if (!guardOk()) return; removeEventListener("keydown", startKey); start(); } };
     G.addEventListener("keydown", startKey);
     if (location.hash === "#autostart") start();
   }
@@ -387,5 +425,5 @@
   let booted = false;
   const boot = () => { if (booted) return; booted = true; if (/(^|\s)phone(\s|$)/.test(document.documentElement.className)) return; main(); };
   if (document.readyState === "loading") G.addEventListener("DOMContentLoaded", boot); else boot();
-  G.$host = { state, start };
+  G.$host = { state, start };   // (lock() is deliberately NOT reachable from here: the guard got it through $sg.reg)
 })(globalThis);

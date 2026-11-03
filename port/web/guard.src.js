@@ -17,7 +17,7 @@
   var BAKED = /*@BAKED@*/ null;                   // locked config written by tools/build_guard.js (or null = "setup mode": read window.AA_CFG)
 
   // ------------------------------------------------------------------ configuration
-  var RAIL_W = 160, GAP = 12, MIN_SCALE = 0.5;
+  var RAIL_W = 160, GAP = 12;
 
   function parseUnit(v) {
     if (!v) return null;
@@ -29,7 +29,7 @@
       return { key: m[1].toLowerCase(), src: u };
     }
     m = v.match(/\b([0-9a-f]{32})\b/i);
-    if (m) return { key: m[1].toLowerCase(), src: "https://www.highperformanceformat.com/" + m[1].toLowerCase() + "/invoke.js" };
+    if (m) return { key: m[1].toLowerCase(), src: "https://www.highrevenueformat.com/" + m[1].toLowerCase() + "/invoke.js" };     // key only: Adsterra's banner loader of this account (a full link always wins)
     return null;
   }
 
@@ -71,11 +71,11 @@
       "<p><b>Please turn off AdBlock and reload this website to play this game.</b></p>" +
       "<p>This game is free because of the ads. Turn off your ad blocker for this site (or pause it), then reload the page.</p>" +
       "<button id=r>I turned it off - Reload</button>" +
-      "<p class=hi lang=hi>कृपया AdBlock बंद करें और गेम खेलने के लिए इस वेबसाइट को रीलोड करें।</p></div></div>",
+      "<p class=hi lang=hi>à¤•à¥ƒà¤ªà¤¯à¤¾ AdBlock à¤¬à¤‚à¤¦ à¤•à¤°à¥‡à¤‚ à¤”à¤° à¤—à¥‡à¤® à¤–à¥‡à¤²à¤¨à¥‡ à¤•à¥‡ à¤²à¤¿à¤ à¤‡à¤¸ à¤µà¥‡à¤¬à¤¸à¤¾à¤‡à¤Ÿ à¤•à¥‹ à¤°à¥€à¤²à¥‹à¤¡ à¤•à¤°à¥‡à¤‚à¥¤</p></div></div>",
     small: "<div class=w role=alertdialog aria-modal=true><div class=c><h1>Window too small</h1>" +
       "<p><b>Please make your browser window bigger (or press Ctrl + 0 to reset zoom).</b></p>" +
-      "<p>The game and the ads need at least about 980 x 360 pixels.</p>" +
-      "<p class=hi lang=hi>कृपया ब्राउज़र विंडो बड़ी करें या ज़ूम कम करें (Ctrl + 0)।</p></div></div>"
+      "<p>The game and the ads need at least about 900 x 360 pixels.</p>" +
+      "<p class=hi lang=hi>à¤•à¥ƒà¤ªà¤¯à¤¾ à¤¬à¥à¤°à¤¾à¤‰à¤œà¤¼à¤° à¤µà¤¿à¤‚à¤¡à¥‹ à¤¬à¤¡à¤¼à¥€ à¤•à¤°à¥‡à¤‚ à¤¯à¤¾ à¤œà¤¼à¥‚à¤® à¤•à¤® à¤•à¤°à¥‡à¤‚ (Ctrl + 0)à¥¤</p></div></div>"
   };
   function mkMsg(kind) {
     var host = D.createElement("div");
@@ -173,8 +173,8 @@
   // ------------------------------------------------------------------ layout (called by fit() in index.html)
   function lay(vw, vh) {
     if (!active) return { rail: 0, small: false };
-    var rail = RAIL_W + GAP, h = railHeight(vh), s = Math.min((vw - 2 * rail) / 1280, vh / 720);
-    small = !h || s < MIN_SCALE;
+    var rail = RAIL_W + GAP, h = railHeight(vh);
+    small = !h || vh < 360 || vw - 2 * rail < 540;                                   // the game needs about 540 x 360 px between the two ad columns
     return { rail: rail, small: small };
   }
   function plc(x, y, w, h, vw, vh) {
@@ -245,8 +245,33 @@
     probe(u.src).then(function (ok) { if (!ok) { probeFailed = true; tick(); } });
   }
 
-    function tick() {
+    // test page (setup mode only): open the game with  #adcheck  at the end of the address to see what every ad column is doing
+  var dbgOn = !isBaked && /adcheck/.test(String(G.location.hash || "")), dbgEl = null;
+  function dbgUpdate() {
+    if (!dbgOn || !slots.length) return;
+    if (!dbgEl || !dbgEl.isConnected) {
+      dbgEl = D.createElement("pre");
+      dbgEl.style.cssText = "position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:2147483000;margin:0;padding:6px 10px;background:rgba(0,0,0,.82);color:#7f7;font:12px/1.45 monospace;pointer-events:none;white-space:pre";
+      D.documentElement.appendChild(dbgEl);
+    }
+    var out = ["AD CHECK   columns: " + (small ? "hidden (window too small)" : "shown") + "   message when blocked: " + (enforce ? "ON" : "OFF") + "   change every " + (refreshMs / 1000) + " s"];
+    slots.forEach(function (s) {
+      var f = s.frame, line = (s.side === "l" ? "LEFT  " : "RIGHT ") + (s.h || "-") + " px | ";
+      if (!f) { line += "no ad frame yet"; }
+      else {
+        var a = adIframe(f), host = "";
+        try { var u = a && a.getAttribute && a.getAttribute("src"); if (u) host = new G.URL(u, "http://x/").host; } catch (e) { }
+        var why = ""; try { why = inspect(s) || "ok"; } catch (e) { why = "?"; }
+        line += "script " + (scriptFailed(f) ? "FAILED TO LOAD" : f.loaded ? "loaded" : "loading") + " | Adsterra ad frame " + (a ? "YES" + (host ? " (" + host + ")" : "") : "NO") + " | state " + why;
+      }
+      out.push(line);
+    });
+    var t = out.join("\n"); if (dbgEl.textContent !== t) dbgEl.textContent = t;
+  }
+
+  function tick() {
     lastTickAt = now();
+    dbgUpdate();
     if (blocked || !active || !slots.length) return;
     if (D.hidden || small || smallShown) return;                                   // nothing is painted in a background tab / while the size message is up
     if (probeFailed) return showWall("network");

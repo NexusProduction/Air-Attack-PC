@@ -386,6 +386,11 @@
     if (starting) return; // click + Enter at the same time used to boot the game twice
     if (!guardOk()) return; // ad blocker message / window-too-small message is showing
     starting = true;
+    // the game lays itself out for the screen size it sees at start: 720 high and as wide as the window needs (page: window.$gw)
+    const gw = Math.max(960, Math.min(2000, Math.round(G.$gw) || 1280));
+    G.$DEVICE.w = gw; G.$DEVICE.h = 720;
+    try { if (G.fitLock) G.fitLock(); } catch (e) { }
+    try { const k = "aa:dk.logisoft.airattack_preferences", o = JSON.parse(localStorage.getItem(k) || "null"); if (o && (o.DisplayWidth || o.DisplayHeight)) { delete o.DisplayWidth; delete o.DisplayHeight; localStorage.setItem(k, JSON.stringify(o)); } } catch (e) { }
     $("start").disabled = true;
     const ac = G.$audioCtx(); if (ac && ac.state !== "running") { try { await ac.resume(); } catch (e) { } }
     try {

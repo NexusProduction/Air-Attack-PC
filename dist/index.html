@@ -10,12 +10,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
   html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; overscroll-behavior: none; font-family: "Joystix", monospace; color: #fff; -webkit-tap-highlight-color: transparent; }
-  /* fixed 1280x720 game surface; fit() below scales it uniformly to the window and centres it (black bars on the sides / top+bottom) */
+  /* game surface: always 720 px high, and as wide as the window needs (width is chosen by fit() below, see window.$gw); fit() scales it
+     uniformly so that it fills the window from top to bottom (and from side to side, between the two ad columns) */
   #wrap { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; background: #000; overflow: hidden; visibility: hidden; }
-  #screen { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; background: #000; image-rendering: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
-  /* start screen = the game's own full-size title artwork (res/raw/loadingimage_720.png, 1140x720, cropped to 16:9 and scaled to the 1280x720 surface) */
-  #title { position: absolute; inset: 0; background: #0b1b33 url("cover.png") center / 100% 100% no-repeat; }
-  #loading { position: absolute; left: 460px; bottom: 44px; width: 360px; height: 14px; border: 2px solid #fff; background: rgba(0,0,0,.55); }
+  #screen { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: #000; image-rendering: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+  /* start screen = the game's own full-size title artwork (res/raw/loadingimage_720.png, 1140x720, cropped to 16:9); on wider / narrower windows it is cropped, not stretched */
+  #title { position: absolute; inset: 0; background: #0b1b33 url("cover.png") center / cover no-repeat; }
+  #loading { position: absolute; left: 50%; margin-left: -180px; bottom: 44px; width: 360px; height: 14px; border: 2px solid #fff; background: rgba(0,0,0,.55); }
   #bar { height: 100%; width: 0; background: #ffd84a; }
   #status { position: absolute; left: 0; right: 0; bottom: 12px; text-align: center; min-height: 24px; font-size: 14px; color: #f88; }
   #start { display: none; position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0 0 22px 0; box-sizing: border-box; background: transparent; border: 0; cursor: pointer;
@@ -96,20 +97,28 @@
 </div>
 <div id="nojs">Please turn on JavaScript to play Air Attack.</div>
 
-<script src="site-config.js?v=ac77710752"></script>
+<script src="site-config.js?v=c41c469645"></script>
 <script>
-  // Scale the fixed 1280x720 surface to the window: uniform scale (never stretched), centred on whole pixels.
-  // With the side ads on, the game gets the space BETWEEN the two ad rails (window.$sg, see guard.js) and the rails are placed next to it.
+  // Fit the game to the window.
+  //  * The game picture is always 720 px high. Its width follows the window (between 4:3-ish and 21:9-ish), so the picture fills the
+  //    window from top to bottom and from side to side - no black bars. window.$gw = game width in game pixels, read by host.js when the game starts.
+  //  * With the side ads on, the game gets the space BETWEEN the two ad columns (window.$sg, see guard.js) and the columns are placed next to it.
+  //  * Once the game has started its width is fixed (the game lays itself out at start); after that the picture is only scaled uniformly,
+  //    so a later window-shape change can leave black bars - press F5 to fit again.
   // Mouse / touch coordinates are mapped back through getBoundingClientRect() in host.js, so input stays exact at any scale.
   (function () {
-    var wrap = document.getElementById("wrap"), de = document.documentElement, live = false;
+    var wrap = document.getElementById("wrap"), de = document.documentElement, live = false, frozen = 0, GH = 720, MINA = 1.34, MAXA = 2.3;
     function fit() {
       var vw = de.clientWidth || window.innerWidth || 0, vh = de.clientHeight || window.innerHeight || 0;
       if (vw < 1 || vh < 1) return;                                   // hidden iframe / minimised window: keep the last scale
       var sg = window.$sg, L = { rail: 0 };
       try { if (sg) L = sg.lay(vw, vh) || L; } catch (e) { }
-      var s = Math.max(0.02, Math.min((vw - 2 * L.rail) / 1280, vh / 720));
-      var w = 1280 * s, h = 720 * s, x = Math.round((vw - w) / 2), y = Math.round((vh - h) / 2);
+      var aw = Math.max(1, vw - 2 * L.rail), ah = vh;
+      var gw = frozen || Math.round(Math.max(MINA, Math.min(MAXA, aw / ah)) * GH / 2) * 2;
+      var s = Math.max(0.02, Math.min(aw / gw, ah / GH));
+      var w = gw * s, h = GH * s, x = Math.round((vw - w) / 2), y = Math.round((vh - h) / 2);
+      window.$gw = gw;
+      wrap.style.width = gw + "px";
       wrap.style.transform = "scale(" + s + ")";
       wrap.style.left = x + "px";
       wrap.style.top = y + "px";
@@ -119,6 +128,7 @@
     }
     window.fit = fit;
     window.fitGo = function () { live = true; fit(); };
+    window.fitLock = function () { if (!frozen) frozen = window.$gw || 1280; };   // called by host.js the moment the game starts
     fit();
     window.addEventListener("resize", fit);
     window.addEventListener("orientationchange", function () { fit(); setTimeout(fit, 250); });
@@ -134,7 +144,7 @@
   (function () {
     if (/(^|\s)phone(\s|$)/.test(document.documentElement.className)) return;
     var s = document.createElement("script");
-    s.src = "game-bundle.js?v=ac77710752";
+    s.src = "game-bundle.js?v=c41c469645";
     s.onload = function () { window.fitGo(); };
     s.onerror = function () {
       var f = document.getElementById("fatal");

@@ -3,6 +3,7 @@
 //   node tools/build_guard.js                        -> reads port/web/ads.config.json (if it names at least one ad unit the config is BAKED in = locked build)
 //   node tools/build_guard.js --config my.json       -> bake another config file
 //   node tools/build_guard.js --plain                -> no obfuscation (debugging)
+//   node tools/build_guard.js --setup                -> setup mode even if ads.config.json is filled in
 // ads.config.json:  { "left600": "<invoke.js url or 32-char key>", "right600": "...", "left300": "...", "right300": "...", "refresh": 30, "enforce": true }
 const fs = require("fs"), path = require("path"), cp = require("child_process");
 const root = path.join(__dirname, "..");
@@ -10,10 +11,11 @@ const args = process.argv.slice(2);
 const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : null; };
 const cfgPath = opt("--config") || path.join(root, "port/web/ads.config.json");
 const plain = args.includes("--plain");
+const forceSetup = args.includes("--setup");            // ignore ads.config.json: the guard reads the readable site-config.js (for testing the ads before locking)
 
 let src = fs.readFileSync(path.join(root, "port/web/guard.src.js"), "utf8");
 let cfg = null;
-if (fs.existsSync(cfgPath)) {
+if (!forceSetup && fs.existsSync(cfgPath)) {
   const raw = fs.readFileSync(cfgPath, "utf8").trim();
   if (raw) {
     const c = JSON.parse(raw);

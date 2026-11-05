@@ -70,10 +70,11 @@
   const state = { running: false, view: null, activity: null, sleepMs: 0, helpOpen: false, pauseOpen: false, modal: 0, timer: 0, paused: false, pausedFrames: 0 };
 
   // ------------------------------------------------------------------ ad guard (guard.js -> window.$sg)
-  // The guard shows its full-screen message (ad blocker / window too small) and calls lock(): from then on the game neither steps nor
-  // reacts to any input. guardOk() is asked before the game starts, on every frame and for every input event.
+  // The ad helper (guard.js) only places the side banners. It never locks the game: ads must not stop gameplay.
+  // lock() is kept (the startup / pause logic uses it) but nothing in the itch.io build calls it. guardOk() is still asked before the game
+  // starts, on every frame and for every input event.
   let locked = false, allowStep = false, releaseAllFn = null;
-  const guardOk = () => { const g = G.$sg; return !!g && !locked && g.ok(); };   // no guard object at all = fail closed
+  const guardOk = () => { if (locked) return false; try { const g = G.$sg; return !g || g.ok() !== false; } catch (e) { return true; } };   // no / broken ad helper = play on
   function lock(on) {
     on = !!on; if (on === locked) return;
     locked = on;
@@ -430,5 +431,5 @@
   let booted = false;
   const boot = () => { if (booted) return; booted = true; if (/(^|\s)phone(\s|$)/.test(document.documentElement.className)) return; main(); };
   if (document.readyState === "loading") G.addEventListener("DOMContentLoaded", boot); else boot();
-  G.$host = { state, start };   // (lock() is deliberately NOT reachable from here: the guard got it through $sg.reg)
+  G.$host = { state, start };   // (lock() is deliberately NOT reachable from here)
 })(globalThis);

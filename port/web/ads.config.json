@@ -2,7 +2,5 @@
   "left600":  "https://www.highrevenueformat.com/68fbec351719e43e09572f729eabb5d4/invoke.js",
   "right600": "https://www.highrevenueformat.com/68fbec351719e43e09572f729eabb5d4/invoke.js",
   "left300":  "https://www.highrevenueformat.com/0df523323a8be9e301303a72d015281b/invoke.js",
-  "right300": "https://www.highrevenueformat.com/0df523323a8be9e301303a72d015281b/invoke.js",
-  "refresh": 30,
-  "enforce": true
+  "right300": "https://www.highrevenueformat.com/0df523323a8be9e301303a72d015281b/invoke.js"
 }

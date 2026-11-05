@@ -97,7 +97,7 @@
 </div>
 <div id="nojs">Please turn on JavaScript to play Air Attack.</div>
 
-
+<script src="site-config.js?v=138b67534f"></script>
 <script>
   // Fit the game to the window.
   //  * The game picture is always 720 px high. Its width follows the window (between 4:3-ish and 21:9-ish), so the picture fills the
@@ -144,7 +144,7 @@
   (function () {
     if (/(^|\s)phone(\s|$)/.test(document.documentElement.className)) return;
     var s = document.createElement("script");
-    s.src = "game-bundle.js?v=932b5c3f9e";
+    s.src = "game-bundle.js?v=138b67534f";
     s.onload = function () { window.fitGo(); };
     s.onerror = function () {
       var f = document.getElementById("fatal");
